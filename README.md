@@ -1,4 +1,41 @@
-O B.E.M é uma plataforma digital de treinamento musical voltada ao desenvolvimento da percepção auditiva e da prática deliberada.
-O aplicativo organiza o estudo em três eixos principais — harmonia, intervalos e ritmo — propondo exercícios interativos com reprodução sonora, identificação auditiva e verificação imediata de desempenho. A cada interação, o sistema registra acertos e erros, permitindo o acompanhamento contínuo do progresso do usuário.
-Seu principal diferencial está na “biblioteca inteligente”, que analisa padrões de erro e sugere referências teóricas e exercícios direcionados, conectando a prática diretamente ao estudo estruturado.
-De forma geral, o B.E.M funciona como um ambiente integrado de estudo musical que articula execução, escuta, análise e autorregulação do aprendizado.
+📜 10 Mandamentos (o como estudar)
+Constância > intensidade – estude todo dia
+
+Cante antes de tocar ("se não canta, não toca")
+
+Solfeje diariamente – treine o ouvido interno
+
+Transcreva – do som para o papel
+
+Improvise – sem medo, em todos os 12 tons
+
+Analise partituras reais 
+
+Grave-se e ouça-se – auto‑observação
+
+Use metrônomo + Pomodoro (25 min foco / 5 pausa)
+
+Mantenha diário de prática (erros, lições, vitórias)
+
+Toque com os outros – música é coletividade
+
+🧩 10 Pilares (o que estudar)
+Solfejo
+
+Leitura musical
+
+Transcrição
+
+Improvisação
+
+Harmonia clássica
+
+Harmonia analítica
+
+Apreciação musical
+
+Técnica instrumental
+
+Bibliografia musical
+
+Repertório
