@@ -1,1 +1,4 @@
-# blocodestudosmusicais
+O B.E.M é uma plataforma digital de treinamento musical voltada ao desenvolvimento da percepção auditiva e da prática deliberada.
+O aplicativo organiza o estudo em três eixos principais — harmonia, intervalos e ritmo — propondo exercícios interativos com reprodução sonora, identificação auditiva e verificação imediata de desempenho. A cada interação, o sistema registra acertos e erros, permitindo o acompanhamento contínuo do progresso do usuário.
+Seu principal diferencial está na “biblioteca inteligente”, que analisa padrões de erro e sugere referências teóricas e exercícios direcionados, conectando a prática diretamente ao estudo estruturado.
+De forma geral, o B.E.M funciona como um ambiente integrado de estudo musical que articula execução, escuta, análise e autorregulação do aprendizado.
