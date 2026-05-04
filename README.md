@@ -1,5 +1,6 @@
-📜 10 Mandamentos (o como estudar)
-Constância > intensidade – estude todo dia
+📜 Como estudar:
+
+Constância > Intensidade – estude todo dia
 
 Cante antes de tocar ("se não canta, não toca")
 
