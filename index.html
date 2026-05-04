@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>B.E.M — Percepção Musical</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@800;900&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Playfair+Display:wght@400;700;900&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0c0c0c;
+      --surface:     #141414;
+      --surface2:    #1c1c1c;
+      --border:      #2a2a2a;
+      --border-lt:   #333;
+      --text:        #e4e0d8;
+      --text-mid:    #888;
+      --text-faint:  #444;
+      --accent:      #e4e0d8;
+      --green:       #4a9e6a;
+      --red:         #b84848;
+      --gold:        #c8a030;
+      --tab-h:       #e4e0d8;   /* active tab highlight */
+      --mono: 'DM Mono', monospace;
+      --serif: 'Playfair Display', serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 0 5rem;
+      font-size: 13px;
+    }
+
+    /* subtle grain */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9999;
+    }
+
+    /* ===========================
+       TOP BAR
+    =========================== */
+    .topbar {
+      width: 100%;
+      max-width: 720px;
+      padding: 2rem 1.2rem 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1.4rem;
+    }
+
+    .brand-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .brand-left .overline {
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-mid);
+    }
+
+    .brand-left .app-title {
+      font-family: var(--serif);
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+      line-height: 1;
+      margin-top: 4px;
+    }
+
+    .brand-left .app-sub {
+      font-size: 11px;
+      color: var(--text-mid);
+      font-style: italic;
+      margin-top: 4px;
+    }
+
+    /* Global score */
+    .global-score {
+      display: flex;
+      gap: 1px;
+    }
+
+    .gscore-cell {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      text-align: center;
+      min-width: 64px;
+    }
+
+    .gscore-cell:first-child { border-right: none; }
+
+    .gscore-val {
+      font-family: var(--serif);
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .gscore-val.ok  { color: var(--green); }
+    .gscore-val.bad { color: var(--red); }
+
+    .gscore-lbl {
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      margin-top: 1px;
+    }
+
+    /* ===========================
+       TAB NAV
+    =========================== */
+    .tab-nav {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      gap: 0;
+    }
+
+    .tab-nav-btn {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.85rem 1.8rem;
+      border: none;
+      background: none;
+      color: var(--text-mid);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.15s;
+    }
+
+    .tab-nav-btn:hover { color: var(--text); }
+
+    .tab-nav-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-badge {
+      display: inline-block;
+      font-size: 9px;
+      padding: 1px 5px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      margin-left: 6px;
+      vertical-align: middle;
+      color: var(--text-faint);
+    }
+
+    .tab-nav-btn.active .tab-badge {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    /* Mode toggle — pushed to right end of tab-nav */
+    .mode-toggle {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 0 0.6rem;
+      border-left: 1px solid var(--border);
+    }
+
+    .mode-btn {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--text-faint);
+      cursor: pointer;
+      transition: all 0.14s;
+    }
+
+    .mode-btn:hover  { color: var(--text-mid); border-color: var(--border-lt); }
+    .mode-btn.active { background: var(--surface2); color: var(--accent); border-color: var(--border-lt); font-weight: 500; }
+
+    /* ===========================
+       MAIN / VIEWS
+    =========================== */
+    .view-wrap {
+      width: 100%;
+      max-width: 720px;
+      padding: 1.6rem 1.2rem 0;
+    }
+
+    .view { display: none; flex-direction: column; gap: 1.4rem; }
+    .view.active { display: flex; }
+
+    /* ===========================
+       PANELS
+    =========================== */
+    .panel {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 1.4rem 1.6rem;
+      animation: fadeUp 0.25s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(5px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel-label {
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-label::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ===========================
+       SHARED BUTTONS
+    =========================== */
+    .btn {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.8rem 0.6rem;
+      border: 1px solid var(--border-lt);
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.14s;
+      position: relative; overflow: hidden;
+    }
+
+    .btn::before {
+      content: ''; position: absolute; inset: 0;
+      background: var(--accent);
+      transform: translateY(101%);
+      transition: transform 0.16s ease;
+      z-index: 0;
+    }
+
+    .btn:hover::before { transform: translateY(0); }
+    .btn:hover { color: var(--bg); border-color: var(--accent); }
+    .btn span { position: relative; z-index: 1; }
+
+    .btn.playing {
+      border-color: var(--gold);
+      color: var(--gold);
+      animation: pulse 0.9s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(200,160,48,.3); }
+      50%      { box-shadow: 0 0 0 4px rgba(200,160,48,0); }
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+      font-weight: 500;
+      letter-spacing: 0.14em;
+    }
+
+    .btn-primary::before { background: var(--text-mid); }
+    .btn-primary:hover { color: var(--bg); }
+
+    .tab-btn {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 4px 11px;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--text-mid);
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: all 0.12s;
+    }
+
+    .tab-btn:hover  { border-color: var(--text-mid); color: var(--text); }
+    .tab-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+    .btn-check {
+      width: 100%;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.9rem;
+      border: 1px solid var(--border-lt);
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.14s;
+    }
+
+    .btn-check:hover:not(:disabled) { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .btn-check:disabled { opacity: 0.28; cursor: not-allowed; }
+
+    /* ===========================
+       SHARED FORM ELEMENTS
+    =========================== */
+    select {
+      font-family: var(--mono);
+      font-size: 10px;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border-lt);
+      padding: 4px 10px;
+      cursor: pointer;
+      outline: none;
+    }
+
+    select:focus { border-color: var(--text-mid); }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      height: 2px;
+      background: var(--border-lt);
+      outline: none;
+      cursor: pointer;
+      width: 90px;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 11px; height: 11px;
+      background: var(--accent);
+      border-radius: 0; cursor: pointer;
+    }
+
+    /* ===========================
+       OPTIONS ROW
+    =========================== */
+    .opts-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .opts-label {
+      font-size: 10px;
+      color: var(--text-faint);
+      letter-spacing: 0.05em;
+    }
+
+    /* ===========================
+       FEEDBACK
+    =========================== */
+    .feedback {
+      display: none;
+      margin-top: 1rem;
+      padding: 1rem 1.2rem;
+      border-left: 3px solid var(--border);
+    }
+
+    .feedback.show  { display: block; }
+    .feedback.ok    { border-color: var(--green); background: rgba(74,158,106,.06); }
+    .feedback.bad   { border-color: var(--red);   background: rgba(184,72,72,.06);  }
+
+    .fb-result {
+      font-family: var(--serif);
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .feedback.ok  .fb-result { color: var(--green); }
+    .feedback.bad .fb-result { color: var(--red); }
+
+    .fb-exp    { font-size: 11px; color: var(--text-mid); line-height: 1.7; }
+    .fb-theory {
+      margin-top: 8px; font-size: 11px; color: var(--text-mid);
+      font-style: italic; padding-top: 8px;
+      border-top: 1px solid var(--border); line-height: 1.6;
+    }
+
+    /* ===========================
+       HISTORY (shared)
+    =========================== */
+    .history-list {
+      display: flex; flex-direction: column; gap: 3px;
+      max-height: 180px; overflow-y: auto;
+    }
+
+    .history-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; color: var(--text-mid);
+      padding: 5px 0; border-bottom: 1px solid var(--border);
+    }
+
+    .history-item:last-child { border: none; }
+
+    .hdot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .hdot.ok  { background: var(--green); }
+    .hdot.bad { background: var(--red); }
+    .hmod  { font-size: 9px; color: var(--text-faint); min-width: 14px; letter-spacing: .05em; text-transform: uppercase; }
+    .hpair { font-weight: 500; color: var(--text); min-width: 70px; }
+    .hans  { flex: 1; }
+    .htime { font-size: 9px; color: var(--text-faint); }
+
+    .history-empty { font-size: 11px; color: var(--text-faint); font-style: italic; padding: 6px 0; }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--surface); }
+    ::-webkit-scrollbar-thumb { background: var(--border-lt); }
+
+    /* ===========================
+       MODULE A — HARMÔNICA
+    =========================== */
+    .chord-area {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .chord-name {
+      font-family: var(--serif);
+      font-size: 54px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      color: var(--accent);
+      line-height: 1;
+      transition: filter 0.3s;
+    }
+
+    .chord-name.hidden { filter: blur(9px); user-select: none; }
+
+    .chord-type-tag {
+      font-size: 10px; letter-spacing: 0.1em;
+      color: var(--text-mid); text-transform: uppercase; margin-top: 3px;
+    }
+
+    .chord-notes {
+      font-size: 11px; color: var(--text-mid); margin-top: 4px; letter-spacing: 0.05em;
+      transition: filter 0.3s;
+    }
+
+    .chord-notes.hidden { filter: blur(6px); user-select: none; }
+
+    .reveal-btn {
+      font-family: var(--mono); font-size: 10px;
+      background: none; border: 1px solid var(--border-lt);
+      color: var(--text-mid); padding: 4px 11px;
+      cursor: pointer; letter-spacing: 0.06em; transition: all 0.14s;
+    }
+
+    .reveal-btn:hover { border-color: var(--text-mid); color: var(--text); }
+
+    .audio-grid-2 {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+
+    .rand-row {
+      display: flex; align-items: center; gap: 6px;
+      margin-top: 10px; flex-wrap: wrap;
+    }
+
+    .rand-label { font-size: 10px; color: var(--text-faint); letter-spacing: 0.05em; }
+
+    .chord-sel-grid {
+      display: grid; grid-template-columns: repeat(7,1fr); gap: 4px;
+    }
+
+    .chord-sel-btn {
+      font-family: var(--mono); font-size: 10px;
+      padding: 6px 2px; border: 1px solid var(--border);
+      background: transparent; color: var(--text-mid);
+      cursor: pointer; transition: all 0.12s; text-align: center;
+    }
+
+    .chord-sel-btn:hover  { border-color: var(--text-mid); color: var(--text); }
+    .chord-sel-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(228,224,216,.05); }
+
+    .chord-guess-btn {
+      font-family: var(--mono); font-size: 10px;
+      padding: 6px 2px; border: 1px solid var(--border);
+      background: transparent; color: var(--text-mid);
+      cursor: pointer; transition: all 0.12s; text-align: center;
+    }
+
+    .chord-guess-btn:hover { border-color: var(--text-mid); color: var(--text); }
+
+    .func-btn {
+      font-family: var(--mono); font-size: 12px; font-weight: 500;
+      padding: 0.65rem 0.3rem; border: 1px solid var(--border-lt);
+      background: transparent; color: var(--text-mid);
+      cursor: pointer; transition: all 0.12s; letter-spacing: 0.05em;
+    }
+
+    .func-btn:hover { border-color: var(--text); color: var(--text); }
+
+    /* answer button states — shared classes */
+    .selected    { border-color: var(--gold) !important; color: var(--gold) !important; background: rgba(200,160,48,.07) !important; }
+    .correct-ans { border-color: var(--green) !important; color: var(--green) !important; background: rgba(74,158,106,.09) !important; }
+    .wrong-ans   { border-color: var(--red) !important;   color: var(--red) !important;   background: rgba(184,72,72,.08) !important; }
+
+    .answer-grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-bottom: 12px; }
+
+    /* ===========================
+       MODULE B — INTERVALOS
+    =========================== */
+    .interval-display {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 1rem;
+    }
+
+    .notes-visual {
+      display: flex; align-items: center; gap: 16px;
+    }
+
+    .note-pill {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+    }
+
+    .note-big {
+      font-family: var(--serif);
+      font-size: 48px; font-weight: 700; line-height: 1; color: var(--accent);
+      transition: filter 0.3s;
+    }
+
+    .note-big.hidden { filter: blur(10px); user-select: none; }
+
+    .note-sub {
+      font-size: 10px; color: var(--text-faint); letter-spacing: 0.08em;
+    }
+
+    .interval-arrow { font-size: 20px; color: var(--text-faint); }
+
+    .int-label-area { text-align: right; }
+
+    .int-name-big {
+      font-family: var(--serif); font-size: 20px; font-weight: 700; color: var(--accent);
+      transition: filter 0.3s;
+    }
+
+    .int-name-big.hidden { filter: blur(8px); user-select: none; }
+
+    .int-semis {
+      font-size: 11px; color: var(--text-faint); margin-top: 3px;
+      transition: filter 0.3s;
+    }
+
+    .int-semis.hidden { filter: blur(5px); }
+
+    .dir-tag {
+      display: inline-block; font-size: 9px; letter-spacing: 0.12em;
+      text-transform: uppercase; padding: 2px 8px;
+      border: 1px solid var(--border-lt); color: var(--text-mid); margin-top: 6px;
+    }
+
+    .audio-grid-4 {
+      display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px;
+    }
+
+    .interval-table {
+      display: grid; grid-template-columns: repeat(7,1fr); gap: 5px; margin-bottom: 14px;
+    }
+
+    .int-opt {
+      font-family: var(--mono); font-size: 11px;
+      padding: 7px 3px 5px; border: 1px solid var(--border);
+      background: var(--bg); color: var(--text-mid);
+      cursor: pointer; transition: all 0.12s; text-align: center; line-height: 1.3;
+    }
+
+    .int-opt .is  { display: block; font-weight: 500; font-size: 12px; color: var(--text); }
+    .int-opt .ist { display: block; font-size: 9px; color: var(--text-faint); margin-top: 1px; }
+    .int-opt:hover { border-color: var(--text-mid); background: var(--surface2); }
+
+    .filter-grid {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 4px;
+    }
+
+    .filter-item {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 10px; color: var(--text-mid);
+      cursor: pointer; padding: 5px 8px;
+      border: 1px solid var(--border); background: var(--bg);
+      transition: all 0.12s; user-select: none;
+    }
+
+    .filter-item:hover  { border-color: var(--text-mid); }
+    .filter-item.active { border-color: var(--text); background: var(--surface2); color: var(--text); }
+
+    .filter-check {
+      width: 10px; height: 10px;
+      border: 1px solid var(--border-lt);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 8px; flex-shrink: 0; color: transparent;
+    }
+
+    .filter-item.active .filter-check {
+      background: var(--accent); color: var(--bg); border-color: var(--accent);
+    }
+
+    .filter-semis { margin-left: auto; font-size: 9px; color: var(--text-faint); }
+
+    /* stats cells */
+    .stat-row {
+      display: grid; gap: 1px; margin-bottom: 10px;
+    }
+
+    .stat-cell {
+      background: var(--surface2); padding: 7px 8px;
+      text-align: center; border: 1px solid var(--border);
+    }
+
+    .stat-val {
+      font-family: var(--serif); font-size: 18px; font-weight: 700; color: var(--text);
+    }
+
+    .stat-lbl {
+      font-size: 9px; color: var(--text-faint);
+      letter-spacing: 0.1em; text-transform: uppercase; margin-top: 1px;
+    }
+
+    /* footer */
+    footer {
+      max-width: 720px; width: 100%;
+      margin-top: 2.5rem; padding: 1rem 1.2rem 0;
+      border-top: 1px solid var(--border);
+      font-size: 10px; color: var(--text-faint);
+      letter-spacing: 0.07em;
+    }
+
+    /* ===========================
+       BEM LOGO
+    =========================== */
+    .bem-logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .bem-circle {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      background: #e8e3d4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .bem-letters {
+      font-family: 'Barlow Condensed', 'Arial Black', 'Franklin Gothic Heavy', sans-serif;
+      font-size: 21px;
+      font-weight: 900;
+      letter-spacing: 0.01em;
+      color: #0c0c0c;
+      line-height: 1;
+      user-select: none;
+      text-transform: uppercase;
+    }
+
+    .bem-text {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .bem-fullname {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+
+    .bem-tagline {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ======================================================
+     TOP BAR
+====================================================== -->
+<div class="topbar">
+  <div class="brand-row">
+    <div class="brand-left">
+      <!-- BEM Logo — replicado da identidade visual -->
+      <div class="bem-logo">
+        <div class="bem-circle">
+          <span class="bem-letters">BEM</span>
+        </div>
+        <div class="bem-text">
+          <div class="bem-fullname">BLOCO DE ESTUDOS MUSICAIS</div>
+          <div class="bem-tagline">ESCUTA · CRIAÇÃO · COLETIVIDADE</div>
+        </div>
+      </div>
+    </div>
+    <div class="global-score">
+      <div class="gscore-cell">
+        <div class="gscore-val ok"  id="gScoreC">0</div>
+        <div class="gscore-lbl">acertos</div>
+      </div>
+      <div class="gscore-cell">
+        <div class="gscore-val bad" id="gScoreW">0</div>
+        <div class="gscore-lbl">erros</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB NAV -->
+  <nav class="tab-nav">
+    <button class="tab-nav-btn active" onclick="switchTab('harmonica')">
+      Percepção Harmônica <span class="tab-badge" id="badgeH">0</span>
+    </button>
+    <button class="tab-nav-btn" onclick="switchTab('intervalos')">
+      Intervalos <span class="tab-badge" id="badgeI">0</span>
+    </button>
+    <button class="tab-nav-btn" onclick="switchTab('historico')">
+      Histórico
+    </button>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="btnModeSpeaker"   onclick="setMode('speaker')">📱 Caixa</button>
+      <button class="mode-btn"        id="btnModeHeadphone" onclick="setMode('headphone')">🎧 Fone</button>
+    </div>
+  </nav>
+</div>
+
+<!-- ======================================================
+     VIEWS
+====================================================== -->
+<div class="view-wrap">
+
+  <!-- ==================== VIEW: HARMÔNICA ==================== -->
+  <div class="view active" id="view-harmonica">
+
+    <!-- Acorde atual -->
+    <div class="panel">
+      <div class="panel-label">Acorde atual</div>
+      <div class="chord-area">
+        <div>
+          <div class="chord-name hidden" id="hChordName">—</div>
+          <div class="chord-type-tag"    id="hChordType">—</div>
+          <div class="chord-notes hidden" id="hChordNotes">—</div>
+        </div>
+        <div style="text-align:right">
+          <button class="reveal-btn" id="hRevealBtn" onclick="hToggleReveal()">Revelar acorde</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reprodução -->
+    <div class="panel">
+      <div class="panel-label">Reprodução</div>
+      <div class="audio-grid-2">
+        <button class="btn" id="hBtnA"     onclick="hPlayRef()"><span>♩ Tocar Lá (A)</span></button>
+        <button class="btn" id="hBtnChord" onclick="hPlayChord()"><span>♬ Tocar acorde</span></button>
+        <button class="btn btn-primary"    onclick="hNewRandom()"><span>↻ Novo acorde aleatório</span></button>
+      </div>
+      <div class="rand-row">
+        <span class="rand-label">Sortear:</span>
+        <button class="tab-btn active" id="hRandBoth"  onclick="hSetRand('both')">Maior + Menor</button>
+        <button class="tab-btn"        id="hRandMaj"   onclick="hSetRand('major')">Só maiores</button>
+        <button class="tab-btn"        id="hRandMin"   onclick="hSetRand('minor')">Só menores</button>
+      </div>
+      <div class="opts-row">
+        <span class="opts-label">Oitava do A:</span>
+        <select id="hOctave" onchange="hSetOctave(this.value)">
+          <option value="3">A3 — 220 Hz</option>
+          <option value="4" selected>A4 — 440 Hz</option>
+          <option value="5">A5 — 880 Hz</option>
+        </select>
+        <span class="opts-label" style="margin-left:8px">Vol:</span>
+        <input type="range" id="hVol" min="0" max="100" value="70" oninput="setVol(this.value)"/>
+      </div>
+    </div>
+
+    <!-- Seleção manual -->
+    <div class="panel">
+      <div class="panel-label">Selecionar manualmente</div>
+      <div class="opts-row" style="margin-top:0;margin-bottom:10px">
+        <button class="tab-btn active" id="hTypeMaj" onclick="hSetType('major')">Maior</button>
+        <button class="tab-btn"        id="hTypeMin" onclick="hSetType('minor')">Menor</button>
+      </div>
+      <div class="chord-sel-grid" id="hSelGrid"></div>
+    </div>
+
+    <!-- Adivinhar o acorde -->
+    <div class="panel">
+      <div class="panel-label">Qual acorde está tocando?</div>
+      <div class="opts-row" style="margin-top:0;margin-bottom:10px">
+        <button class="tab-btn active" id="hGuessMaj"  onclick="hSetGuessType('major')">Maior</button>
+        <button class="tab-btn"        id="hGuessMin"  onclick="hSetGuessType('minor')">Menor</button>
+        <button class="tab-btn"        id="hGuessBoth" onclick="hSetGuessType('both')">Ambos</button>
+      </div>
+      <div class="chord-sel-grid" id="hGuessGrid"></div>
+      <div class="feedback" id="hFbChord">
+        <div class="fb-result" id="hFbChordRes"></div>
+        <div class="fb-exp"    id="hFbChordExp"></div>
+      </div>
+    </div>
+
+    <!-- Função do A -->
+    <div class="panel">
+      <div class="panel-label">Qual função o A exerce?</div>
+      <div class="answer-grid-4" id="hFuncGrid"></div>
+      <button class="btn-check" id="hBtnCheck" onclick="hCheckFunc()" disabled>Verificar função</button>
+      <div class="feedback" id="hFbFunc">
+        <div class="fb-result" id="hFbFuncRes"></div>
+        <div class="fb-exp"    id="hFbFuncExp"></div>
+      </div>
+    </div>
+
+  </div><!-- /view-harmonica -->
+
+  <!-- ==================== VIEW: INTERVALOS ==================== -->
+  <div class="view" id="view-intervalos">
+
+    <!-- Intervalo atual -->
+    <div class="panel" id="iPanelInt">
+      <div class="panel-label">Intervalo atual</div>
+      <div class="interval-display">
+        <div>
+          <div class="notes-visual">
+            <div class="note-pill">
+              <div class="note-big" id="iNoteA">—</div>
+              <div class="note-sub">nota 1</div>
+            </div>
+            <div class="interval-arrow">→</div>
+            <div class="note-pill">
+              <div class="note-big hidden" id="iNoteB">—</div>
+              <div class="note-sub">nota 2</div>
+            </div>
+          </div>
+          <div class="dir-tag" id="iDirTag">—</div>
+        </div>
+        <div class="int-label-area">
+          <div class="int-name-big hidden" id="iIntName">—</div>
+          <div class="int-semis  hidden" id="iIntSemis">—</div>
+          <div style="margin-top:8px">
+            <button class="reveal-btn" id="iRevealBtn" onclick="iToggleReveal()">Revelar resposta</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reprodução -->
+    <div class="panel">
+      <div class="panel-label">Reprodução</div>
+      <div class="audio-grid-4">
+        <button class="btn" id="iBtnN1"   onclick="iPlayNote1()"><span>♩ Nota 1</span></button>
+        <button class="btn" id="iBtnN2"   onclick="iPlayNote2()"><span>♩ Nota 2</span></button>
+        <button class="btn" id="iBtnSeq"  onclick="iPlaySeq()"><span>♫ Seq.</span></button>
+        <button class="btn" id="iBtnHarm" onclick="iPlayHarm()"><span>♬ Harm.</span></button>
+        <button class="btn btn-primary" style="grid-column:1/-1" onclick="iNew()"><span>↻ Novo intervalo</span></button>
+      </div>
+      <div class="opts-row">
+        <span class="opts-label">Direção:</span>
+        <button class="tab-btn active" id="iDirAsc"  onclick="iSetDir('asc')">Ascendente</button>
+        <button class="tab-btn"        id="iDirDesc" onclick="iSetDir('desc')">Descendente</button>
+        <button class="tab-btn"        id="iDirBoth" onclick="iSetDir('both')">Aleatória</button>
+      </div>
+      <div class="opts-row">
+        <span class="opts-label">Raiz:</span>
+        <select id="iRootMode" onchange="iRootMode=this.value">
+          <option value="fixed_A">Fixo: Lá (A)</option>
+          <option value="fixed_C">Fixo: Dó (C)</option>
+          <option value="random">Aleatório</option>
+        </select>
+        <span class="opts-label" style="margin-left:8px">Vol:</span>
+        <input type="range" id="iVol" min="0" max="100" value="70" oninput="setVol(this.value)"/>
+      </div>
+    </div>
+
+    <!-- Filtro de intervalos -->
+    <div class="panel">
+      <div class="panel-label">Intervalos ativos</div>
+      <div class="filter-grid" id="iFilterGrid"></div>
+      <div class="opts-row" style="margin-top:10px">
+        <button class="tab-btn active" onclick="iFilterAll()">Todos</button>
+        <button class="tab-btn" onclick="iFilterGroup('consonant')">Consonantes</button>
+        <button class="tab-btn" onclick="iFilterGroup('dissonant')">Dissonantes</button>
+        <button class="tab-btn" onclick="iFilterGroup('diatonic')">Diatônicos</button>
+      </div>
+    </div>
+
+    <!-- Resposta -->
+    <div class="panel" id="iPanelAnswer">
+      <div class="panel-label">Qual é o intervalo?</div>
+      <div class="interval-table" id="iIntTable"></div>
+      <button class="btn-check" id="iBtnCheck" onclick="iCheck()" disabled>Verificar</button>
+      <div class="feedback" id="iFb">
+        <div class="fb-result" id="iFbRes"></div>
+        <div class="fb-exp"    id="iFbExp"></div>
+        <div class="fb-theory" id="iFbTheory"></div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="panel">
+      <div class="panel-label">Desempenho por intervalo</div>
+      <div class="stat-row" id="iStatsRow">
+        <div style="font-size:11px;color:var(--text-faint);font-style:italic">Nenhum intervalo treinado ainda.</div>
+      </div>
+      <div class="panel-label" style="margin-top:1rem">Histórico desta sessão</div>
+      <div class="history-list" id="iHistory">
+        <div class="history-empty">Nenhuma resposta ainda.</div>
+      </div>
+    </div>
+
+  </div><!-- /view-intervalos -->
+
+  <!-- ==================== VIEW: HISTÓRICO ==================== -->
+  <div class="view" id="view-historico">
+    <div class="panel">
+      <div class="panel-label">Histórico completo da sessão</div>
+      <div class="history-list" style="max-height:500px" id="allHistory">
+        <div class="history-empty">Nenhuma resposta ainda.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /view-wrap -->
+
+<footer>
+  Web Audio API · B.E.M — Bloco de Estudos Musicais · Percepção Musical
+</footer>
+
+<script>
+'use strict';
+// ================================================================
+//  SHARED AUDIO ENGINE — Dual-mode timbre
+//  'speaker' : otimizado para caixa de celular (médios, pluck, chorus)
+//  'headphone': som cheio com sub-harmônico e reverb (fone/caixa boa)
+// ================================================================
+let audioCtx   = null;
+let masterGain = null;
+let eqLow      = null;   // shelf grave
+let eqMid      = null;   // peak médio
+let eqHigh     = null;   // shelf agudo
+let reverbNode = null;
+let reverbGain = null;
+let _vol       = 0.70;
+let _mode      = 'speaker'; // 'speaker' | 'headphone'
+
+// ── Perfis de EQ e reverb por modo ──────────────────────────────
+const PROFILES = {
+  speaker: {
+    lowShelfFreq: 300,  lowShelfGain: -8,    // corta graves (inaudíveis no celular)
+    peakFreq:     900,  peakGain:     +5,  peakQ: 1.2,  // realça médio-baixo (presença)
+    highShelfFreq:3500, highShelfGain: +2,   // leve brilho
+    reverbMix:    0.06,                       // reverb muito seco (clareza)
+    reverbDur:    0.6,  reverbDecay:   2.0,
+  },
+  headphone: {
+    lowShelfFreq: 200,  lowShelfGain: +3,    // graves cheios
+    peakFreq:     700,  peakGain:     +1,  peakQ: 0.8,
+    highShelfFreq:4000, highShelfGain: +1,
+    reverbMix:    0.20,                       // reverb mais presente
+    reverbDur:    1.8,  reverbDecay:   2.8,
+  }
+};
+
+// ── Perfis de osciladores por modo ──────────────────────────────
+// Cada entrada: [gainMultiplier, freqFactor, detuneCents]
+// Speaker: enfatiza 2º–4º harmônicos (300–2000 Hz), sem sub
+// Headphone: fundamental forte, sub suave, chorus leve
+const OSC_PROFILES = {
+  speaker: [
+    // fund,  2nd,    3rd,    4th,    chorus_A, chorus_B
+    // Sem sub-oitava! Harmônicos mais fortes na faixa de médio
+    { gain: 0.55, factor: 1.0,  detune:  0  },  // fundamental
+    { gain: 0.42, factor: 2.0,  detune:  0  },  // 2º harm  (oitava acima)  ← presença
+    { gain: 0.28, factor: 3.0,  detune:  0  },  // 3º harm  (quinta acima)  ← brilho
+    { gain: 0.18, factor: 4.0,  detune:  0  },  // 4º harm
+    { gain: 0.38, factor: 1.0,  detune: +6  },  // chorus A (+6 cents)       ← engrossamento
+    { gain: 0.38, factor: 1.0,  detune: -6  },  // chorus B (-6 cents)
+    { gain: 0.22, factor: 2.0,  detune: +8  },  // chorus 2º harm +
+    { gain: 0.22, factor: 2.0,  detune: -8  },  // chorus 2º harm -
+  ],
+  headphone: [
+    { gain: 0.50, factor: 1.0,  detune:  0  },  // fundamental
+    { gain: 0.14, factor: 0.5,  detune:  0  },  // sub-oitava (suave — graves do fone)
+    { gain: 0.22, factor: 2.0,  detune:  0  },  // 2º harm
+    { gain: 0.12, factor: 3.0,  detune:  0  },  // 3º harm
+    { gain: 0.06, factor: 4.0,  detune:  0  },  // 4º harm
+    { gain: 0.28, factor: 1.0,  detune: +4  },  // chorus A (+4 cents — mais suave)
+    { gain: 0.28, factor: 1.0,  detune: -4  },  // chorus B
+  ]
+};
+
+// ── Envelopes por modo ───────────────────────────────────────────
+const ENV = {
+  speaker: {
+    // Mais percussivo: attack rápido com pico inicial (como piano/violão)
+    // Dá "presença" imediata em caixas pequenas
+    attack:   0.008,   // attack rapidíssimo
+    peak:     0.42,    // gain de pico
+    decay:    0.12,    // cai rápido ao sustain
+    sustain:  0.26,    // sustain médio
+    release:  0.35,    // release moderado
+    dur:      1.6,
+  },
+  headphone: {
+    // Mais suave e longo — o fone aguenta
+    attack:   0.022,
+    peak:     0.36,
+    decay:    0.18,
+    sustain:  0.24,
+    release:  0.50,
+    dur:      2.0,
+  }
+};
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  _buildGraph();
+}
+
+function _buildGraph() {
+  // Destruir nós antigos se existirem (ao trocar de modo)
+  if (masterGain) masterGain.disconnect();
+
+  const p = PROFILES[_mode];
+
+  // EQ chain: lowShelf → peak → highShelf
+  eqLow  = audioCtx.createBiquadFilter();
+  eqLow.type      = 'lowshelf';
+  eqLow.frequency.value = p.lowShelfFreq;
+  eqLow.gain.value      = p.lowShelfGain;
+
+  eqMid  = audioCtx.createBiquadFilter();
+  eqMid.type      = 'peaking';
+  eqMid.frequency.value = p.peakFreq;
+  eqMid.Q.value         = p.peakQ;
+  eqMid.gain.value      = p.peakGain;
+
+  eqHigh = audioCtx.createBiquadFilter();
+  eqHigh.type      = 'highshelf';
+  eqHigh.frequency.value = p.highShelfFreq;
+  eqHigh.gain.value      = p.highShelfGain;
+
+  // Limiter suave (compressor) para proteger clipping em celular
+  const comp = audioCtx.createDynamicsCompressor();
+  comp.threshold.value = -14;
+  comp.knee.value      =  6;
+  comp.ratio.value     =  4;
+  comp.attack.value    =  0.003;
+  comp.release.value   =  0.15;
+
+  // Reverb
+  reverbNode = audioCtx.createConvolver();
+  reverbNode.buffer = _mkImpulse(p.reverbDur, p.reverbDecay);
+  reverbGain = audioCtx.createGain();
+  reverbGain.gain.value = p.reverbMix;
+
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = _vol;
+
+  // Roteamento: masterGain → EQ chain → comp → destination
+  //                        └→ reverb → reverbGain → destination
+  masterGain.connect(eqLow);
+  eqLow.connect(eqMid);
+  eqMid.connect(eqHigh);
+  eqHigh.connect(comp);
+  comp.connect(audioCtx.destination);
+
+  eqHigh.connect(reverbNode);
+  reverbNode.connect(reverbGain);
+  reverbGain.connect(audioCtx.destination);
+}
+
+function _mkImpulse(dur, decay) {
+  const sr = audioCtx.sampleRate, len = Math.floor(sr * dur);
+  const b = audioCtx.createBuffer(2, len, sr);
+  for (let c = 0; c < 2; c++) {
+    const d = b.getChannelData(c);
+    for (let i = 0; i < len; i++)
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+  }
+  return b;
+}
+
+function midiToFreq(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+
+// ── Guard contra overlap de áudio ───────────────────────────────
+let _playBusy = false;
+let _playBusyTimer = null;
+
+function _setBusy(dur) {
+  _playBusy = true;
+  if (_playBusyTimer) clearTimeout(_playBusyTimer);
+  _playBusyTimer = setTimeout(() => { _playBusy = false; }, dur * 1000 + 200);
+}
+
+function playNote(freq, t, durOverride) {
+  initAudio();
+  const env  = ENV[_mode];
+  const oscs = OSC_PROFILES[_mode];
+  const dur  = durOverride !== undefined ? durOverride : env.dur;
+
+  // Envelope principal da nota
+  const g = audioCtx.createGain();
+  g.connect(masterGain);
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(env.peak,    t + env.attack);
+  g.gain.linearRampToValueAtTime(env.sustain, t + env.attack + env.decay);
+  g.gain.setValueAtTime(env.sustain,           t + dur - env.release);
+  g.gain.linearRampToValueAtTime(0,            t + dur);
+
+  // Vibrato em cents (fixo, independente da frequência) — fix #6
+  const lfoDepthCents = _mode === 'speaker' ? 1.5 : 3.0;
+  const lfoDepthHz    = freq * (Math.pow(2, lfoDepthCents / 1200) - 1);
+  const lfo  = audioCtx.createOscillator();
+  const lfoG = audioCtx.createGain();
+  lfo.frequency.value = 5.2;
+  lfoG.gain.value     = lfoDepthHz;
+  lfo.connect(lfoG);
+  lfo.start(t); lfo.stop(t + dur + 0.15);
+
+  // Osciladores parciais
+  oscs.forEach(({ gain, factor, detune }) => {
+    const osc = audioCtx.createOscillator();
+    const og  = audioCtx.createGain();
+    osc.type            = 'sine';
+    osc.frequency.value = freq * factor;
+    osc.detune.value    = detune;
+    lfoG.connect(osc.frequency);
+    osc.connect(og);
+    og.connect(g);
+    og.gain.value = gain;
+    osc.start(t); osc.stop(t + dur + 0.15);
+  });
+}
+
+// ── Trocar de modo — com fade para evitar corte abrupto (#5) ────
+function setMode(mode) {
+  _mode = mode;
+  document.getElementById('btnModeSpeaker').classList.toggle('active',   mode === 'speaker');
+  document.getElementById('btnModeHeadphone').classList.toggle('active', mode === 'headphone');
+  if (!audioCtx) return; // ainda não iniciado, _buildGraph será chamado no initAudio
+  // Fade out → rebuild → fade in para evitar clique/corte
+  if (masterGain) {
+    masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+    masterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.08);
+    setTimeout(() => {
+      _buildGraph();
+      masterGain.gain.linearRampToValueAtTime(_vol, audioCtx.currentTime + 0.08);
+    }, 100);
+  }
+}
+
+function setVol(v) {
+  _vol = v / 100;
+  if (masterGain) masterGain.gain.value = _vol;
+  document.getElementById('hVol').value = v;
+  document.getElementById('iVol').value = v;
+}
+
+document.addEventListener('click', () => {
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+});
+
+// ================================================================
+//  SHARED SCORE & HISTORY
+// ================================================================
+let gScoreC = 0, gScoreW = 0;
+let hScoreC = 0, hScoreW = 0;
+let iScoreC = 0, iScoreW = 0;
+
+function addScore(isCorrect, module) {
+  if (isCorrect) { gScoreC++; if (module === 'h') hScoreC++; else iScoreC++; }
+  else           { gScoreW++; if (module === 'h') hScoreW++; else iScoreW++; }
+  document.getElementById('gScoreC').textContent = gScoreC;
+  document.getElementById('gScoreW').textContent = gScoreW;
+  const hT = hScoreC + hScoreW, iT = iScoreC + iScoreW;
+  document.getElementById('badgeH').textContent = hT ? `${hScoreC}/${hT}` : '0';
+  document.getElementById('badgeI').textContent = iT ? `${iScoreC}/${iT}` : '0';
+}
+
+function resetScores() {
+  if (!confirm('Zerar toda a pontuação desta sessão?')) return;
+  gScoreC = gScoreW = hScoreC = hScoreW = iScoreC = iScoreW = 0;
+  INTERVALS.forEach(iv => { iStats[iv.semitones].c = 0; iStats[iv.semitones].w = 0; });
+  ['gScoreC','gScoreW'].forEach(id => document.getElementById(id).textContent = '0');
+  document.getElementById('badgeH').textContent = '0';
+  document.getElementById('badgeI').textContent = '0';
+  iRenderStats();
+  // Limpar históricos
+  ['allHistory','iHistory'].forEach(id => {
+    document.getElementById(id).innerHTML = '<div class="history-empty">Nenhuma resposta ainda.</div>';
+  });
+}
+
+// subtype: 'acorde' | 'função' | null
+function addHistory(module, pair, answer, isCorrect, subtype) {
+  const now = new Date();
+  const t = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  const modLabel = module === 'h'
+    ? (subtype === 'acorde' ? 'H·A' : subtype === 'função' ? 'H·F' : 'H')
+    : 'I';
+
+  function mkItem(listId, withMod) {
+    const list = document.getElementById(listId);
+    const empty = list.querySelector('.history-empty');
+    if (empty) empty.remove();
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.innerHTML = `
+      <span class="hdot ${isCorrect ? 'ok' : 'bad'}"></span>
+      ${withMod ? `<span class="hmod">${modLabel}</span>` : ''}
+      <span class="hpair">${pair}</span>
+      <span class="hans">${answer}</span>
+      <span class="htime">${t}</span>
+    `;
+    list.insertBefore(item, list.firstChild);
+    const items = list.querySelectorAll('.history-item');
+    if (items.length > 30) list.removeChild(list.lastChild);
+  }
+
+  mkItem('allHistory', true);
+  if (module === 'i') mkItem('iHistory', false);
+}
+
+// ================================================================
+//  TAB NAVIGATION
+// ================================================================
+function switchTab(tab) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab-nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + tab).classList.add('active');
+  const idx = ['harmonica','intervalos','historico'].indexOf(tab);
+  document.querySelectorAll('.tab-nav-btn')[idx].classList.add('active');
+}
+
+// ================================================================
+//  MODULE H — PERCEPÇÃO HARMÔNICA
+// ================================================================
+const H_NOTE_NAMES = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+
+const H_CHORDS = {
+  major: [
+    { name:'C',  root:60, type:'maior', intervals:[0,4,7] },
+    { name:'D',  root:62, type:'maior', intervals:[0,4,7] },
+    { name:'E',  root:64, type:'maior', intervals:[0,4,7] },
+    { name:'F',  root:65, type:'maior', intervals:[0,4,7] },
+    { name:'G',  root:67, type:'maior', intervals:[0,4,7] },
+    { name:'A',  root:69, type:'maior', intervals:[0,4,7] },
+    { name:'B',  root:71, type:'maior', intervals:[0,4,7] },
+  ],
+  minor: [
+    { name:'Cm', root:60, type:'menor', intervals:[0,3,7] },
+    { name:'Dm', root:62, type:'menor', intervals:[0,3,7] },
+    { name:'Em', root:64, type:'menor', intervals:[0,3,7] },
+    { name:'Fm', root:65, type:'menor', intervals:[0,3,7] },
+    { name:'Gm', root:67, type:'menor', intervals:[0,3,7] },
+    { name:'Am', root:69, type:'menor', intervals:[0,3,7] },
+    { name:'Bm', root:71, type:'menor', intervals:[0,3,7] },
+  ]
+};
+
+const H_FUNC_NAMES = {
+  0:'fundamental (1)', 1:'segunda menor (b2)', 2:'segunda maior (2)',
+  3:'terça menor (b3)', 4:'terça maior (3)', 5:'quarta justa (4)',
+  6:'trítono (b5)', 7:'quinta justa (5)', 8:'sexta menor (b6)',
+  9:'sexta maior (6)', 10:'sétima menor (b7)', 11:'sétima maior (7)',
+};
+
+const H_FUNCS = ['1','b2','2','b3','3','4','b5','5','b6','6','b7','7'];
+const H_FUNC_SEMI = {'1':0,'b2':1,'2':2,'b3':3,'3':4,'4':5,'b5':6,'5':7,'b6':8,'6':9,'b7':10,'7':11};
+
+let hOctave    = 4;
+let hRandMode  = 'both';
+let hManType   = 'major';
+let hGuessType = 'major';
+let hCurrentChord   = null;
+let hChordRevealed  = false;
+let hSelectedFunc   = null;
+let hAnswered       = false;
+let hGuessAnswered  = false;
+
+function hGetAMidi() { return 12 * (hOctave + 1) + 9; }
+
+function hGetChordMidis(chord) {
+  let rootBase = chord.root;
+  if (hOctave === 3) rootBase -= 12;
+  if (hOctave === 5) rootBase += 12;
+  return chord.intervals.map(i => rootBase + i);
+}
+
+function hSetOctave(v) { hOctave = parseInt(v); }
+
+function hSetRand(mode) {
+  hRandMode = mode;
+  ['hRandBoth','hRandMaj','hRandMin'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById({both:'hRandBoth', major:'hRandMaj', minor:'hRandMin'}[mode]).classList.add('active');
+}
+
+function hPlayRef() {
+  initAudio();
+  playNote(midiToFreq(hGetAMidi()), audioCtx.currentTime);
+  hFlash('hBtnA');
+}
+
+function hPlayChord() {
+  if (!hCurrentChord) return;
+  initAudio();
+  const midis = hGetChordMidis(hCurrentChord);
+  const t = audioCtx.currentTime;
+  midis.forEach((m, i) => playNote(midiToFreq(m), t + i * 0.07, 2.2));
+  hFlash('hBtnChord');
+}
+
+function hFlash(id) {
+  document.getElementById(id).classList.add('playing');
+  setTimeout(() => document.getElementById(id).classList.remove('playing'), 2400);
+}
+
+function hNewRandom() {
+  let pool = hRandMode === 'major' ? H_CHORDS.major
+           : hRandMode === 'minor' ? H_CHORDS.minor
+           : [...H_CHORDS.major, ...H_CHORDS.minor];
+  hLoadChord(pool[Math.floor(Math.random() * pool.length)]);
+}
+
+function hLoadChord(chord) {
+  hCurrentChord  = chord;
+  hChordRevealed = false;
+  hAnswered      = false;
+  hGuessAnswered = false;
+  hSelectedFunc  = null;
+
+  document.getElementById('hChordName').textContent = chord.name;
+  document.getElementById('hChordName').classList.add('hidden');
+  document.getElementById('hChordType').textContent = chord.type.toUpperCase();
+  document.getElementById('hChordNotes').classList.add('hidden');
+  document.getElementById('hRevealBtn').textContent = 'Revelar acorde';
+
+  const midis = hGetChordMidis(chord);
+  document.getElementById('hChordNotes').textContent =
+    midis.map(m => H_NOTE_NAMES[m % 12]).join(' — ');
+
+  // reset feedbacks
+  document.getElementById('hFbChord').className = 'feedback';
+  document.getElementById('hFbFunc').className  = 'feedback';
+  document.getElementById('hBtnCheck').disabled = true;
+
+  document.querySelectorAll('#hFuncGrid .func-btn').forEach(b =>
+    b.classList.remove('selected','correct-ans','wrong-ans'));
+  document.querySelectorAll('#hGuessGrid .chord-guess-btn').forEach(b =>
+    b.classList.remove('correct-ans','wrong-ans'));
+
+  hUpdateSelHighlight(chord.name);
+  setTimeout(() => hPlayChord(), 80);
+}
+
+function hToggleReveal() {
+  hChordRevealed = !hChordRevealed;
+  document.getElementById('hChordName').classList.toggle('hidden', !hChordRevealed);
+  document.getElementById('hChordNotes').classList.toggle('hidden', !hChordRevealed);
+  document.getElementById('hRevealBtn').textContent = hChordRevealed ? 'Ocultar acorde' : 'Revelar acorde';
+}
+
+function hRevealAll() {
+  if (!hChordRevealed) {
+    hChordRevealed = true;
+    document.getElementById('hChordName').classList.remove('hidden');
+    document.getElementById('hChordNotes').classList.remove('hidden');
+    document.getElementById('hRevealBtn').textContent = 'Ocultar acorde';
+  }
+}
+
+// Selector manual
+function hSetType(type) {
+  hManType = type;
+  document.getElementById('hTypeMaj').classList.toggle('active', type === 'major');
+  document.getElementById('hTypeMin').classList.toggle('active', type === 'minor');
+  hRenderSelGrid();
+}
+
+function hRenderSelGrid() {
+  const grid = document.getElementById('hSelGrid');
+  grid.innerHTML = '';
+  H_CHORDS[hManType].forEach(chord => {
+    const btn = document.createElement('button');
+    btn.className = 'chord-sel-btn';
+    btn.textContent = chord.name;
+    btn.dataset.chordName = chord.name;
+    if (hCurrentChord && hCurrentChord.name === chord.name) btn.classList.add('active');
+    btn.onclick = () => { hLoadChord(chord); hUpdateSelHighlight(chord.name); };
+    grid.appendChild(btn);
+  });
+}
+
+function hUpdateSelHighlight(name) {
+  document.querySelectorAll('#hSelGrid .chord-sel-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.chordName === name));
+}
+
+// Guess grid
+function hSetGuessType(type) {
+  hGuessType = type;
+  ['hGuessMaj','hGuessMin','hGuessBoth'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById({major:'hGuessMaj', minor:'hGuessMin', both:'hGuessBoth'}[type]).classList.add('active');
+  hRenderGuessGrid();
+}
+
+function hRenderGuessGrid() {
+  const grid = document.getElementById('hGuessGrid');
+  grid.innerHTML = '';
+  const pool = hGuessType === 'major' ? H_CHORDS.major
+             : hGuessType === 'minor' ? H_CHORDS.minor
+             : [...H_CHORDS.major, ...H_CHORDS.minor];
+  pool.forEach(chord => {
+    const btn = document.createElement('button');
+    btn.className = 'chord-guess-btn';
+    btn.textContent = chord.name;
+    btn.dataset.guessName = chord.name;
+    btn.onclick = () => hGuessChord(chord);
+    grid.appendChild(btn);
+  });
+}
+
+function hGuessChord(chord) {
+  if (hGuessAnswered) return;
+  hGuessAnswered = true;
+  const isOk = chord.name === hCurrentChord.name;
+
+  document.querySelectorAll('#hGuessGrid .chord-guess-btn').forEach(b => {
+    if (b.dataset.guessName === hCurrentChord.name) b.classList.add('correct-ans');
+    else if (b.dataset.guessName === chord.name && !isOk) b.classList.add('wrong-ans');
+  });
+
+  hRevealAll();
+
+  const semi = hComputeAFunc();
+  const fb = document.getElementById('hFbChord');
+  fb.className = 'feedback show ' + (isOk ? 'ok' : 'bad');
+  document.getElementById('hFbChordRes').textContent = isOk ? '✓ Acorde correto!' : `✗ Era ${hCurrentChord.name}.`;
+  document.getElementById('hFbChordExp').textContent = isOk
+    ? `É o acorde ${hCurrentChord.name}. O Lá (A) é a ${H_FUNC_NAMES[semi]} deste acorde.`
+    : `Você escolheu ${chord.name}. O acorde correto é ${hCurrentChord.name} — o Lá (A) é a ${H_FUNC_NAMES[semi]} dele.`;
+
+  addScore(isOk, 'h');
+  addHistory('h', `${chord.name} → ${hCurrentChord.name}`, isOk ? '✓' : `✗ era ${hCurrentChord.name}`, isOk, 'acorde');
+}
+
+// Função do A
+function hComputeAFunc() {
+  const aPc = hGetAMidi() % 12;
+  const rPc = hCurrentChord.root % 12;
+  return (aPc - rPc + 12) % 12;
+}
+
+function hSemiToFunc(s) {
+  return ['1','b2','2','b3','3','4','b5','5','b6','6','b7','7'][s] || '?';
+}
+
+function hRenderFuncGrid() {
+  const grid = document.getElementById('hFuncGrid');
+  grid.innerHTML = '';
+  H_FUNCS.forEach(fn => {
+    const btn = document.createElement('button');
+    btn.className = 'func-btn';
+    btn.textContent = fn;
+    btn.dataset.fn = fn;
+    btn.onclick = () => hSelectFunc(fn);
+    grid.appendChild(btn);
+  });
+}
+
+function hSelectFunc(fn) {
+  if (hAnswered) return;
+  hSelectedFunc = fn;
+  document.querySelectorAll('#hFuncGrid .func-btn').forEach(b =>
+    b.classList.toggle('selected', b.dataset.fn === fn));
+  document.getElementById('hBtnCheck').disabled = false;
+}
+
+function hCheckFunc() {
+  if (!hSelectedFunc || !hCurrentChord || hAnswered) return;
+  hAnswered = true;
+
+  const semi    = hComputeAFunc();
+  const correct = hSemiToFunc(semi);
+  const isOk    = hSelectedFunc === correct;
+
+  document.querySelectorAll('#hFuncGrid .func-btn').forEach(b => {
+    b.classList.remove('selected');
+    if (b.dataset.fn === correct)              b.classList.add('correct-ans');
+    else if (b.dataset.fn === hSelectedFunc && !isOk) b.classList.add('wrong-ans');
+  });
+
+  hRevealAll();
+
+  const fb = document.getElementById('hFbFunc');
+  fb.className = 'feedback show ' + (isOk ? 'ok' : 'bad');
+  document.getElementById('hFbFuncRes').textContent = isOk ? '✓ Correto!' : '✗ Errado.';
+  document.getElementById('hFbFuncExp').textContent = isOk
+    ? `O Lá (A) é a ${H_FUNC_NAMES[semi]} do acorde ${hCurrentChord.name}. (${semi} semitons acima da fundamental)`
+    : `Você respondeu "${hSelectedFunc}", mas o correto é "${correct}". O Lá (A) é a ${H_FUNC_NAMES[semi]} do acorde ${hCurrentChord.name} — ${semi} semitons acima da fundamental ${hCurrentChord.name}.`;
+
+  document.getElementById('hBtnCheck').disabled = true;
+  addScore(isOk, 'h');
+  addHistory('h', hCurrentChord.name, `A = ${hSelectedFunc}${isOk ? '' : ' → ' + correct}`, isOk, 'função');
+}
+
+function hInit() {
+  hRenderFuncGrid();
+  hRenderSelGrid();
+  hRenderGuessGrid();
+  hNewRandom();
+}
+
+// ================================================================
+//  MODULE I — INTERVALOS
+// ================================================================
+const INTERVALS = [
+  { semitones:0,  symbol:'Uníssono', short:'U',   name:'Uníssono Justo',   groups:['consonant','diatonic'], theory:'Duas notas idênticas. Base da percepção musical — reconhecer "a mesma nota".' },
+  { semitones:1,  symbol:'2ª m',     short:'2m',  name:'Segunda Menor',    groups:['dissonant'],            theory:'Intervalo cromático de tensão máxima. Ex: Mi→Fá, Si→Dó.' },
+  { semitones:2,  symbol:'2ª M',     short:'2M',  name:'Segunda Maior',    groups:['dissonant','diatonic'], theory:'O passo diatônico fundamental da escala maior. Ex: Dó→Ré.' },
+  { semitones:3,  symbol:'3ª m',     short:'3m',  name:'Terça Menor',      groups:['consonant','diatonic'], theory:'Base do acorde menor. Caráter introspectivo. Ex: Lá→Dó, Mi→Sol.' },
+  { semitones:4,  symbol:'3ª M',     short:'3M',  name:'Terça Maior',      groups:['consonant','diatonic'], theory:'Base do acorde maior. Caráter luminoso. Ex: Dó→Mi, Fá→Lá.' },
+  { semitones:5,  symbol:'4ª J',     short:'4J',  name:'Quarta Justa',     groups:['consonant','diatonic'], theory:'Intervalo aberto. Inversão da quinta. Ex: Dó→Fá.' },
+  { semitones:6,  symbol:'Trítono',  short:'TT',  name:'Trítono',          groups:['dissonant'],            theory:'Divide a oitava ao meio. Máxima tensão — "diabolus in musica".' },
+  { semitones:7,  symbol:'5ª J',     short:'5J',  name:'Quinta Justa',     groups:['consonant','diatonic'], theory:'Intervalo mais estável depois do uníssono. Fundamento da série harmônica.' },
+  { semitones:8,  symbol:'6ª m',     short:'6m',  name:'Sexta Menor',      groups:['consonant','diatonic'], theory:'Inversão da 3ª maior. Som melancólico e expressivo.' },
+  { semitones:9,  symbol:'6ª M',     short:'6M',  name:'Sexta Maior',      groups:['consonant','diatonic'], theory:'Inversão da 3ª menor. Caráter aberto e afetuoso.' },
+  { semitones:10, symbol:'7ª m',     short:'7m',  name:'Sétima Menor',     groups:['dissonant','diatonic'], theory:'Intervalo do V7. Cria tensão que pede resolução. Ex: Sol→Fá.' },
+  { semitones:11, symbol:'7ª M',     short:'7M',  name:'Sétima Maior',     groups:['dissonant'],            theory:'Som tenso e moderno. Presente nos acordes maj7. Semiton abaixo da oitava.' },
+  { semitones:12, symbol:'Oitava',   short:'8ª',  name:'Oitava Justa',     groups:['consonant','diatonic'], theory:'A mesma nota em frequência dobrada. Completude e repouso. Razão 2:1.' },
+];
+
+const I_ROOTS = {
+  fixed_A: [{name:'A', midi:69}],
+  fixed_C: [{name:'C', midi:60}],
+  random: [{name:'C',midi:60},{name:'D',midi:62},{name:'E',midi:64},
+           {name:'F',midi:65},{name:'G',midi:67},{name:'A',midi:69},{name:'B',midi:71}]
+};
+
+const NOTE_PT = {C:'Dó',D:'Ré',E:'Mi',F:'Fá',G:'Sol',A:'Lá',B:'Si',
+                 'C#':'Dó#','Eb':'Ré♭','F#':'Fá#','Ab':'Lá♭','Bb':'Si♭'};
+
+let iDirection  = 'asc';
+let iRootMode   = 'fixed_A';
+let iActiveFilters = new Set(INTERVALS.map(iv => iv.semitones));
+let iCurrent    = null;  // { rootMidi, rootName, interval, actualDir }
+let iSelected   = null;
+let iAnswered   = false;
+let iRevealed   = false;
+const iStats    = {};
+INTERVALS.forEach(iv => { iStats[iv.semitones] = { c:0, w:0 }; });
+
+function iSetDir(d) {
+  iDirection = d;
+  ['iDirAsc','iDirDesc','iDirBoth'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById({asc:'iDirAsc', desc:'iDirDesc', both:'iDirBoth'}[d]).classList.add('active');
+}
+
+function iGetFreqs() {
+  if (!iCurrent) return [440,440];
+  const {rootMidi, interval, actualDir} = iCurrent;
+  const fA = midiToFreq(rootMidi);
+  const fB = midiToFreq(rootMidi + (actualDir === 'asc' ? interval.semitones : -interval.semitones));
+  return [fA, fB];
+}
+
+function iFlash(id) {
+  document.getElementById(id).classList.add('playing');
+  setTimeout(() => document.getElementById(id).classList.remove('playing'), 2400);
+}
+
+function iPlayNote1()  { initAudio(); playNote(iGetFreqs()[0], audioCtx.currentTime); iFlash('iBtnN1'); }
+function iPlayNote2()  { initAudio(); playNote(iGetFreqs()[1], audioCtx.currentTime); iFlash('iBtnN2'); }
+function iPlaySeq()    {
+  initAudio();
+  const [fA,fB] = iGetFreqs(), t = audioCtx.currentTime;
+  playNote(fA, t, 1.6); playNote(fB, t + 1.7, 1.6);
+  iFlash('iBtnSeq');
+}
+function iPlayHarm()   {
+  initAudio();
+  const [fA,fB] = iGetFreqs(), t = audioCtx.currentTime;
+  playNote(fA, t, 2.2); playNote(fB, t, 2.2);
+  iFlash('iBtnHarm');
+}
+
+function iNew() {
+  iAnswered = false; iSelected = null; iRevealed = false;
+
+  const pool = INTERVALS.filter(iv => iActiveFilters.has(iv.semitones));
+  const interval = pool[Math.floor(Math.random() * pool.length)];
+  const roots = I_ROOTS[iRootMode];
+  const root  = roots[Math.floor(Math.random() * roots.length)];
+  let actualDir = iDirection;
+  if (iDirection === 'both') actualDir = Math.random() > .5 ? 'asc' : 'desc';
+
+  iCurrent = { rootMidi: root.midi, rootName: root.name, interval, actualDir };
+
+  const semOff = actualDir === 'asc' ? interval.semitones : -interval.semitones;
+  const midi2  = root.midi + semOff;
+  const name2  = iNoteFromMidi(midi2);
+
+  document.getElementById('iNoteA').textContent = NOTE_PT[root.name] || root.name;
+  document.getElementById('iNoteB').textContent = NOTE_PT[name2]    || name2;
+  document.getElementById('iNoteB').classList.add('hidden');
+  document.getElementById('iIntName').textContent  = interval.name;
+  document.getElementById('iIntName').classList.add('hidden');
+  document.getElementById('iIntSemis').textContent = interval.semitones + ' semitons';
+  document.getElementById('iIntSemis').classList.add('hidden');
+
+  const dirTag = document.getElementById('iDirTag');
+  dirTag.textContent = actualDir === 'asc' ? '↑ ascendente' : '↓ descendente';
+  dirTag.style.display = iDirection === 'both' ? 'none' : 'inline-block';
+
+  document.getElementById('iRevealBtn').textContent = 'Revelar resposta';
+  document.getElementById('iFb').className  = 'feedback';
+  document.getElementById('iBtnCheck').disabled = true;
+  document.querySelectorAll('#iIntTable .int-opt').forEach(b =>
+    b.classList.remove('selected','correct-ans','wrong-ans'));
+
+  setTimeout(() => iPlaySeq(), 80);
+}
+
+function iNoteFromMidi(midi) {
+  const ns = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+  return ns[((midi % 12) + 12) % 12];
+}
+
+function iToggleReveal() {
+  iRevealed = !iRevealed;
+  document.getElementById('iNoteB').classList.toggle('hidden', !iRevealed);
+  document.getElementById('iIntName').classList.toggle('hidden', !iRevealed);
+  document.getElementById('iIntSemis').classList.toggle('hidden', !iRevealed);
+  if (iDirection === 'both') {
+    const dt = document.getElementById('iDirTag');
+    dt.style.display = iRevealed ? 'inline-block' : 'none';
+    if (iRevealed) dt.textContent = iCurrent.actualDir === 'asc' ? '↑ ascendente' : '↓ descendente';
+  }
+  document.getElementById('iRevealBtn').textContent = iRevealed ? 'Ocultar' : 'Revelar resposta';
+}
+
+function iRevealAll() {
+  if (iRevealed) return;
+  iRevealed = true;
+  document.getElementById('iNoteB').classList.remove('hidden');
+  document.getElementById('iIntName').classList.remove('hidden');
+  document.getElementById('iIntSemis').classList.remove('hidden');
+  if (iDirection === 'both') {
+    const dt = document.getElementById('iDirTag');
+    dt.style.display = 'inline-block';
+    dt.textContent = iCurrent.actualDir === 'asc' ? '↑ ascendente' : '↓ descendente';
+  }
+  document.getElementById('iRevealBtn').textContent = 'Ocultar';
+}
+
+function iRenderFilterGrid() {
+  const g = document.getElementById('iFilterGrid');
+  g.innerHTML = '';
+  INTERVALS.forEach(iv => {
+    const item = document.createElement('label');
+    item.className = 'filter-item' + (iActiveFilters.has(iv.semitones) ? ' active' : '');
+    item.innerHTML = `
+      <div class="filter-check">${iActiveFilters.has(iv.semitones) ? '✓' : ''}</div>
+      <span>${iv.symbol}</span>
+      <span class="filter-semis">${iv.semitones}st</span>
+    `;
+    item.onclick = () => {
+      if (iActiveFilters.has(iv.semitones)) {
+        if (iActiveFilters.size <= 1) return;
+        iActiveFilters.delete(iv.semitones);
+      } else {
+        iActiveFilters.add(iv.semitones);
+      }
+      iRenderFilterGrid(); iRenderAnswerGrid();
+    };
+    g.appendChild(item);
+  });
+}
+
+function iFilterAll() {
+  INTERVALS.forEach(iv => iActiveFilters.add(iv.semitones));
+  iRenderFilterGrid(); iRenderAnswerGrid();
+}
+
+function iFilterGroup(group) {
+  iActiveFilters.clear();
+  INTERVALS.forEach(iv => { if (iv.groups.includes(group)) iActiveFilters.add(iv.semitones); });
+  if (!iActiveFilters.size) iFilterAll();
+  iRenderFilterGrid(); iRenderAnswerGrid();
+}
+
+function iRenderAnswerGrid() {
+  const table = document.getElementById('iIntTable');
+  table.innerHTML = '';
+  const active = INTERVALS.filter(iv => iActiveFilters.has(iv.semitones));
+  // Dynamic columns
+  const cols = active.length <= 7 ? active.length : active.length <= 10 ? 5 : 7;
+  table.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  active.forEach(iv => {
+    const btn = document.createElement('button');
+    btn.className = 'int-opt';
+    btn.dataset.s = iv.semitones;
+    btn.innerHTML = `<span class="is">${iv.symbol}</span><span class="ist">${iv.semitones}st</span>`;
+    btn.onclick = () => {
+      if (iAnswered) return;
+      iSelected = iv.semitones;
+      document.querySelectorAll('#iIntTable .int-opt').forEach(b =>
+        b.classList.toggle('selected', parseInt(b.dataset.s) === iv.semitones));
+      document.getElementById('iBtnCheck').disabled = false;
+    };
+    table.appendChild(btn);
+  });
+}
+
+function iCheck() {
+  if (iAnswered || iSelected === null || !iCurrent) return;
+  iAnswered = true;
+
+  const correct = iCurrent.interval.semitones;
+  const isOk    = iSelected === correct;
+
+  document.querySelectorAll('#iIntTable .int-opt').forEach(b => {
+    const s = parseInt(b.dataset.s);
+    b.classList.remove('selected');
+    if (s === correct)             b.classList.add('correct-ans');
+    else if (s === iSelected && !isOk) b.classList.add('wrong-ans');
+  });
+
+  iRevealAll();
+
+  const iv      = iCurrent.interval;
+  const wrongIv = INTERVALS.find(i => i.semitones === iSelected);
+  const fb = document.getElementById('iFb');
+  fb.className = 'feedback show ' + (isOk ? 'ok' : 'bad');
+  document.getElementById('iFbRes').textContent = isOk ? '✓ Correto!' : `✗ Era uma ${iv.name}.`;
+  document.getElementById('iFbExp').textContent = isOk
+    ? `É uma ${iv.name} (${iv.semitones} semitons).`
+    : `Você respondeu ${wrongIv ? wrongIv.name : iSelected + ' st'}. O correto é ${iv.name} (${iv.semitones} st).`;
+  document.getElementById('iFbTheory').textContent = iv.theory;
+
+  document.getElementById('iBtnCheck').disabled = true;
+  if (isOk) iStats[correct].c++; else iStats[correct].w++;
+
+  addScore(isOk, 'i');
+
+  const {rootName, actualDir} = iCurrent;
+  const midi2 = iCurrent.rootMidi + (actualDir === 'asc' ? iv.semitones : -iv.semitones);
+  const n2    = iNoteFromMidi(midi2);
+  addHistory('i',
+    `${NOTE_PT[rootName]||rootName} → ${NOTE_PT[n2]||n2}`,
+    isOk ? iv.short : `${wrongIv ? wrongIv.short : '?'} → ${iv.short}`,
+    isOk
+  );
+
+  iRenderStats();
+}
+
+function iRenderStats() {
+  const row = document.getElementById('iStatsRow');
+  const tried = INTERVALS.filter(iv => iStats[iv.semitones].c + iStats[iv.semitones].w > 0);
+  if (!tried.length) {
+    row.innerHTML = '<div style="font-size:11px;color:var(--text-faint);font-style:italic">Nenhum intervalo treinado ainda.</div>';
+    return;
+  }
+  const cols = Math.min(tried.length, 7);
+  row.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  row.innerHTML = '';
+  tried.forEach(iv => {
+    const s = iStats[iv.semitones];
+    const total = s.c + s.w;
+    const pct = total > 0 ? Math.round(s.c / total * 100) : 0;
+    const cell = document.createElement('div');
+    cell.className = 'stat-cell';
+    cell.innerHTML = `
+      <div class="stat-val" style="color:${pct>=70?'var(--green)':pct>=40?'var(--gold)':'var(--red)'}">${pct}%</div>
+      <div class="stat-lbl">${iv.short}</div>
+    `;
+    row.appendChild(cell);
+  });
+}
+
+function iInit() {
+  iRenderFilterGrid();
+  iRenderAnswerGrid();
+  iRenderStats();
+  iNew();
+}
+
+// ================================================================
+//  BOOT
+// ================================================================
+hInit();
+iInit();
+</script>
+</body>
+</html>
